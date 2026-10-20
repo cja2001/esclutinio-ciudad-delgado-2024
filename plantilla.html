@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ciudad Delgado · Elecciones 2024</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+:root {
+  /* Paleta Nuevas Ideas: celeste de la bandera, blanco y azul marino; estructura al estilo Apple */
+  --brand: #00aeef; --brand-deep: #0077b0; --navy: #04243a;
+  --bg: #f5f5f7; --panel: #ffffff; --fg: #1d1d1f; --muted: #6e6e73; --line: rgba(0,0,0,.08);
+  --accent: #0077b0; --ok: #0077b0; --warn: #3a8fb7; --bad: #04243a; --chip: #f0f0f3;
+  --point: #00aeef; --point-line: #04243a; --point-hi: #8fe0ff; --grid: #ececf0;
+  --glass: rgba(251,251,253,.8); --shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.05);
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --num: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000; --panel: #1c1c1e; --fg: #f5f5f7; --muted: #a1a1a6; --line: rgba(255,255,255,.12);
+    --accent: #3cc3f5; --ok: #3cc3f5; --warn: #6fb4d3; --bad: #f5f5f7; --chip: #2c2c2e;
+    --point: #00aeef; --point-line: #04243a; --point-hi: #8fe0ff; --grid: #2c2c2e;
+    --glass: rgba(22,22,24,.78); --shadow: 0 1px 2px rgba(0,0,0,.4); color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; letter-spacing: -0.011em; }
+.nav { position: sticky; top: 0; z-index: 1000; background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid var(--line); }
+.nav-in { max-width: 1200px; margin-inline: auto; height: 48px; padding-inline: 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.nav-t { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+.nav-logo { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--brand); color: #fff; font: 800 15px/1 var(--num); }
+.nav-l { display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; }
+.nav-l a { color: var(--muted); text-decoration: none; font-size: 13px; white-space: nowrap; transition: color .2s; }
+.nav-l a:hover { color: var(--fg); }
+section[id^="s-"] { scroll-margin-top: 64px; }
+.wrap { max-width: 1200px; margin-inline: auto; padding-block: 28px 72px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+.hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0; background: linear-gradient(180deg, #2ec2f7 0%, var(--brand) 100%); color: var(--navy); border-radius: 28px; padding: 56px 28px 52px; }
+.hero .logo { width: 64px; height: 64px; display: grid; place-items: center; background: #fff; color: var(--brand); border-radius: 16px; font: 800 44px/1 var(--num); margin-bottom: 22px; box-shadow: 0 8px 24px rgba(4,36,58,.18); }
+.hero .sub { color: var(--navy); opacity: .8; margin: 14px auto 0; max-width: 60ch; font-size: 17px; line-height: 1.45; }
+.hero .takeaway { margin: 20px auto 0; font-size: 19px; line-height: 1.4; max-width: 62ch; font-weight: 500; }
+.hero .takeaway b { color: var(--navy); font-weight: 700; }
+h1 { font: 700 clamp(32px, 5.2vw, 56px)/1.05 var(--num); margin: 0; text-wrap: balance; letter-spacing: -0.03em; }
+h2 { font: 600 21px/1.25 var(--num); margin: 0; letter-spacing: -0.02em; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 80ch; }
+.card { background: var(--panel); border-radius: 22px; padding: 26px; min-width: 0; box-shadow: var(--shadow); }
+.card-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 20px; margin-bottom: 18px; }
+.note { color: var(--muted); font-size: 13.5px; margin: 4px 0 0; max-width: 70ch; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 16px; }
+.kpi { background: var(--panel); border-radius: 22px; padding: 22px 24px; box-shadow: var(--shadow); }
+.kpi .lbl { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.kpi .val { font: 600 40px/1.05 var(--num); margin-top: 8px; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.kpi .det { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 32px; }
+.mapgrid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 20px; }
+@media (max-width: 900px) { .mapgrid { grid-template-columns: 1fr; } }
+.mapbox { position: relative; isolation: isolate; }
+#mapa { width: 100%; height: clamp(420px, 70vh, 640px); border-radius: 16px; background: var(--grid); font-family: var(--sans); }
+#mapa .lblw { overflow: visible; }
+#mapa .lbl { position: absolute; left: 0; top: 0; transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px))); white-space: nowrap; text-align: center; font: 600 11px/1.1 var(--sans); color: #18222d; -webkit-text-stroke: 3px rgba(255,255,255,.85); paint-order: stroke fill; }
+#mapa .leaflet-marker-icon.cv { color: var(--navy); display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--point); border: 1.5px solid var(--point-line); opacity: .95; cursor: pointer; transition: opacity .15s; font: 700 9.5px var(--sans); }
+#mapa .cv:hover, #mapa .cv.sel { background: var(--point-hi); opacity: 1; border-width: 2.5px; }
+#mapa .cv.dim { opacity: .25; }
+#mapa .leaflet-overlay-pane path { filter: drop-shadow(0 0 1.5px #fff); }
+#mapa .leaflet-bar, #mapa .leaflet-control-layers { border: none; border-radius: 12px; box-shadow: 0 4px 18px rgba(0,0,0,.16); overflow: hidden; }
+#mapa .leaflet-control-layers { background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(16px); backdrop-filter: saturate(180%) blur(16px); color: var(--fg); padding: 4px 6px; font-size: 13px; }
+#mapa .leaflet-bar a { border-bottom-color: var(--line); }
+.leaflet-tooltip.cdtip { background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(16px); backdrop-filter: saturate(180%) blur(16px); color: var(--fg); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 34px rgba(0,0,0,.2); padding: 10px 12px; font: 12.5px/1.45 var(--sans); white-space: normal; width: max-content; max-width: 280px; }
+.leaflet-tooltip.cdtip::before { display: none; }
+.cdtip b { display: block; margin-bottom: 2px; font-weight: 600; }
+.cdtip .m { color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; margin-top: 14px; color: var(--muted); font-size: 12px; }
+.legend svg { display: block; }
+.side { display: grid; gap: 20px; align-content: start; }
+.det h3 { margin: 6px 0 4px; font: 600 19px/1.25 var(--num); letter-spacing: -0.02em; }
+.det dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 14px 0 0; }
+.det dt { color: var(--muted); }
+.det dd { margin: 0; font-variant-numeric: tabular-nums; }
+.chip { display: inline-block; padding: 2px 10px; border-radius: 99px; background: var(--chip); font-size: 12px; color: var(--muted); }
+.chip.ok { color: var(--ok); } .chip.warn { color: var(--warn); } .chip.bad { color: var(--bad); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; }
+.btn { font: inherit; font-size: 13px; background: var(--chip); color: var(--fg); border: none; border-radius: 99px; padding: 6px 14px; cursor: pointer; transition: background .2s, color .2s, box-shadow .2s; }
+.btn:hover { background: var(--grid); }
+.btn[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.btn:focus-visible, input:focus-visible, th button:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 55%, transparent); outline-offset: 2px; }
+.tabs { display: inline-flex; flex-wrap: wrap; gap: 2px; background: var(--chip); padding: 3px; border-radius: 99px; }
+.tabs .btn { background: transparent; }
+.tabs .btn:hover { background: transparent; color: var(--accent); }
+.tabs .btn[aria-pressed="true"] { background: var(--panel); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.14); }
+.bars { display: grid; gap: 9px; }
+.bar { display: grid; grid-template-columns: minmax(90px, 140px) 1fr auto; align-items: center; gap: 12px; font-size: 13.5px; }
+.bar .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar .tr { height: 10px; background: var(--grid); border-radius: 99px; position: relative; overflow: hidden; }
+.bar .fl { position: absolute; inset: 0 auto 0 0; border-radius: 99px; transition: width .4s ease, opacity .2s; }
+.bar .v { font-variant-numeric: tabular-nums; text-align: right; min-width: 108px; }
+.bar .v small { color: var(--muted); }
+.subt { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.tablebox { overflow: auto; max-height: 520px; border-radius: 14px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 11px 14px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+th { position: sticky; top: 0; background: var(--glass); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); z-index: 1; font-weight: 600; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+th button { all: unset; cursor: pointer; }
+th[aria-sort="ascending"] button::after { content: " ▲"; font-size: 9px; }
+th[aria-sort="descending"] button::after { content: " ▼"; font-size: 9px; }
+tbody tr { cursor: pointer; transition: background .15s; }
+tbody tr:hover, tbody tr.sel { background: var(--chip); }
+tbody tr:last-child td { border-bottom: none; }
+.inbar { display: inline-block; height: 8px; border-radius: 99px; background: var(--brand); vertical-align: middle; margin-right: 8px; }
+.search { font: inherit; padding: 9px 16px; border: none; border-radius: 99px; background: var(--chip); color: var(--fg); width: min(100%, 300px); }
+.search::placeholder { color: var(--muted); }
+.waffle { display: grid; gap: 12px; }
+.wrow { display: grid; grid-template-columns: minmax(150px, 260px) 1fr; gap: 12px; align-items: center; font-size: 12.5px; }
+.wrow .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.cells { display: flex; flex-wrap: wrap; gap: 4px; }
+.cell { width: 15px; height: 15px; border-radius: 5px; background: var(--grid); }
+.cell.s-jrv { background: var(--brand); } .cell.s-centro { background: #8fd8f7; } .cell.s-none { background: var(--grid); }
+.notes { color: var(--muted); font-size: 13px; display: grid; gap: 8px; }
+.notes a { color: var(--accent); text-decoration: none; }
+.notes a:hover { text-decoration: underline; }
+.filtro { display: none; align-items: center; gap: 8px; }
+.filtro.on { display: inline-flex; }
+@media (max-width: 520px) { .bar { grid-template-columns: 90px 1fr; } .bar .v { grid-column: 1 / -1; text-align: left; } .wrow { grid-template-columns: 1fr; } .card { padding: 20px; } .hero { padding: 40px 20px; } .nav-l { gap: 16px; } }
+</style>
+</head>
+<body>
+<nav class="nav" aria-label="Secciones">
+  <div class="nav-in">
+    <span class="nav-t"><span class="nav-logo" aria-hidden="true">N</span>Ciudad Delgado</span>
+    <span class="nav-l"><a href="#s-mapa">Mapa</a><a href="#s-resultados">Resultados</a><a href="#s-cantones">Cantones</a><a href="#s-centros">Centros</a><a href="#s-cobertura">Cobertura</a><a href="#fuentes">Fuentes</a></span>
+  </div>
+</nav>
+<div class="wrap">
+
+<header class="hero">
+  <div class="logo" aria-hidden="true">N</div>
+  <h1>Ciudad Delgado · Elecciones 2024</h1>
+  <p class="sub">Distrito Ciudad Delgado, municipio San Salvador Centro. Presidente y diputados (4 de febrero de 2024) y concejo municipal (3 de marzo de 2024).</p>
+  <p class="takeaway" id="takeaway"></p>
+</header>
+
+<section class="kpis" id="kpis"></section>
+
+<section class="mapgrid" id="s-mapa">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <h2>Centros de votación por cantón y barrio</h2>
+        <p class="note">El tamaño de cada punto es proporcional al número de JRV del centro. Pasa el cursor para ver el detalle; haz clic en un cantón o en un centro para filtrar.</p>
+      </div>
+      <span class="filtro" id="filtroMapa"><span class="chip" id="filtroTxt"></span><button class="btn" id="limpiar" type="button">Quitar filtro</button></span>
+    </div>
+    <div class="mapbox" id="mapbox">
+      <div id="mapa" role="region" aria-label="Mapa de Ciudad Delgado con los centros de votación"></div>
+    </div>
+    <div class="legend" id="leyenda"></div>
+  </div>
+  <aside class="side">
+    <div class="card det" id="detalle"></div>
+    <div class="card">
+      <h2>Electores por cantón o barrio</h2>
+      <p class="note">Según dónde votan (padrón 2024 por centro de votación).</p>
+      <div class="bars" id="barCanton" style="margin-top:10px"></div>
+    </div>
+  </aside>
+</section>
+
+<section class="card" id="s-resultados">
+  <div class="card-head">
+    <div>
+      <h2>Resultados del distrito</h2>
+      <p class="note" id="notaRes"></p>
+    </div>
+    <div class="tabs" id="tabsRes" role="tablist"></div>
+  </div>
+  <div class="grid2">
+    <div>
+      <h2 style="font-size:16px">Ciudad Delgado</h2>
+      <div class="bars" id="barsCD" style="margin-top:10px"></div>
+      <div class="subt" id="subCD"></div>
+    </div>
+    <div>
+      <h2 style="font-size:16px">Municipio San Salvador Centro (6 distritos)</h2>
+      <div class="bars" id="barsMun" style="margin-top:10px"></div>
+      <div class="subt" id="subMun"></div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="s-cantones">
+  <div class="card-head">
+    <div>
+      <h2>Cantones y barrios</h2>
+      <p class="note">Superficie de la capa de divisiones; centros ubicados por sus coordenadas oficiales del TSE.</p>
+    </div>
+  </div>
+  <div class="tablebox"><table id="tCanton"></table></div>
+</section>
+
+<section class="card" id="s-centros">
+  <div class="card-head">
+    <div>
+      <h2>Centros de votación</h2>
+      <p class="note">Votos de alcalde solo donde el portal del TSE quedó archivado.</p>
+    </div>
+    <input class="search" id="buscar" type="search" placeholder="Buscar centro, cantón o dirección" aria-label="Buscar centro de votación">
+  </div>
+  <div class="tablebox"><table id="tCentros"></table></div>
+</section>
+
+<section class="card" id="s-cobertura">
+  <div class="card-head">
+    <div>
+      <h2>Cobertura de datos por JRV</h2>
+      <p class="note">Cada cuadro es una JRV, agrupada por centro de votación.</p>
+    </div>
+    <div class="tabs" id="tabsJrv"></div>
+  </div>
+  <div class="legend" id="leyJrv" style="margin:0 0 12px"></div>
+  <div class="waffle" id="waffle"></div>
+</section>
+
+<section class="card notes" id="fuentes">
+  <h2 style="color:var(--fg)">Fuentes y notas</h2>
+  <div>Resultados del distrito, de centros y de JRV: portal de divulgación del escrutinio final 2024 del TSE (ya retirado), recuperado de Internet Archive. Solo existen las páginas que el archivo llegó a guardar.</div>
+  <div>Municipio San Salvador Centro: TSE, anexos 9-C (presidente), 10-B (diputados, con decimales por voto fraccionado) y 12-B (concejo municipal). <a href="https://tse.gob.sv/index.php/publico/documentos/33" target="_blank" rel="noopener">tse.gob.sv · Documentos Elecciones 2024</a></div>
+  <div>Centros de votación, JRV, electores y coordenadas: TSE, anexo 8-A. Cantones y barrios: capa DIVISION_DE_CANTONES de CIUDAD DELGADO.kmz. Mapas base: © colaboradores de OpenStreetMap e imágenes satelitales de Esri, Maxar y Earthstar Geographics, con Leaflet.</div>
+  <div>Para tener los votos de las 140 JRV hace falta una solicitud de acceso a la información pública (LAIP) al TSE.</div>
+  <div id="generado"></div>
+</section>
+</div>
+
+<script>
+const DATA = /*__DATA__*/;
+(() => {
+  const { centros_votacion: centros, divisiones, resultados_distrito: resDist, resultados_centro_jrv: resCJ, jrv, generado } = DATA;
+  const $ = (id) => document.getElementById(id);
+  const fmt = new Intl.NumberFormat('es-SV');
+  const pct = (x) => (x * 100).toLocaleString('es-SV', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
+  const el = (tag, attrs = {}, ...kids) => {
+    const n = tag === 'svg' || attrs.svg ? document.createElementNS('http://www.w3.org/2000/svg', tag) : document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) { if (k === 'svg') continue; if (k === 'text') n.textContent = v; else if (k === 'cls') n.setAttribute('class', v); else n.setAttribute(k, v); }
+    for (const k of kids) if (k != null) n.append(k);
+    return n;
+  };
+  const S = (tag, attrs = {}, ...kids) => el(tag, { ...attrs, svg: true }, ...kids);
+  const GAMA = ['#00aeef', '#062f4a', '#0077b0', '#3cc6f6', '#0b4f7a', '#0095d5', '#6bd3f8', '#083d63', '#0088c9', '#26b8f2', '#04243a'];
+  divisiones.forEach((d, i) => { d.color = GAMA[i % GAMA.length]; });
+  const colorDe = Object.fromEntries(divisiones.map((d) => [d.nombre, d.color]));
+  let filtro = null; // {tipo: 'canton'|'centro', valor}
+
+  // ---------- agregados
+  const porCanton = divisiones.map((d) => {
+    const cs = centros.filter((c) => c.canton_barrio === d.nombre);
+    return { ...d, centros: cs.length, jrv: cs.reduce((a, c) => a + c.total_jrv, 0), electores: cs.reduce((a, c) => a + c.electores, 0) };
+  });
+  const totElect = centros.reduce((a, c) => a + c.electores, 0);
+  const totJrv = centros.reduce((a, c) => a + c.total_jrv, 0);
+  const totArea = divisiones.reduce((a, d) => a + d.area_km2, 0);
+  const elec = (e) => resDist.filter((r) => r.eleccion === e);
+  const validos = (rows, k) => rows.filter((r) => r.tipo === 'partido' && r[k] != null).reduce((a, r) => a + r[k], 0);
+  const top = (rows, k) => rows.filter((r) => r.tipo === 'partido' && r[k] != null).sort((a, b) => b[k] - a[k])[0];
+  const alcCentro = {}; // votos de alcalde archivados por rango de JRV del centro o por JRV
+  for (const r of resCJ) (alcCentro[r.jrv] ??= {})[r.concepto] = r.votos;
+  const sumPart = (o) => Object.entries(o).filter(([k]) => !['NULOS', 'ABSTENCIONES', 'IMPUGNADOS', 'FALTANTES', 'SOBRANTES', 'INUTILIZADAS'].includes(k)).reduce((a, [, v]) => a + v, 0);
+
+  // ---------- encabezado y cifras
+  const mayor = [...porCanton].sort((a, b) => b.electores - a.electores)[0];
+  const pres = elec('Presidente'), alc = elec('Alcalde (Concejo municipal)');
+  const vP = validos(pres, 'votos_ciudad_delgado'), vA = validos(alc, 'votos_ciudad_delgado');
+  const tP = top(pres, 'votos_ciudad_delgado'), tA = top(alc, 'votos_ciudad_delgado');
+  const tk = $('takeaway');
+  tk.append(`${fmt.format(totElect)} electores votan en ${centros.length} centros y ${totJrv} JRV. `,
+    el('b', { text: mayor.nombre }), ` concentra el ${pct(mayor.electores / totElect)} del padrón; `,
+    `${tP.concepto} obtuvo el ${pct(tP.votos_ciudad_delgado / vP)} de los votos válidos para presidente y el ${pct(tA.votos_ciudad_delgado / vA)} para alcalde.`);
+  const kpi = (lbl, val, det) => el('div', { cls: 'kpi' }, el('div', { cls: 'lbl', text: lbl }), el('div', { cls: 'val', text: val }), el('div', { cls: 'det', text: det }));
+  $('kpis').append(
+    kpi('Electores', fmt.format(totElect), 'Padrón 2024 en el distrito'),
+    kpi('JRV', fmt.format(totJrv), `De la ${jrv[0].jrv} a la ${jrv[jrv.length - 1].jrv}`),
+    kpi('Centros de votación', fmt.format(centros.length), `En ${porCanton.filter((c) => c.centros).length} de ${divisiones.length} cantones y barrios`),
+    kpi('Válidos presidente', fmt.format(vP), `${pct(vP / totElect)} del padrón · ${tP.concepto} ${pct(tP.votos_ciudad_delgado / vP)}`),
+    kpi('Válidos alcalde', fmt.format(vA), `${pct(vA / totElect)} del padrón · ${tA.concepto} ${pct(tA.votos_ciudad_delgado / vA)}`),
+  );
+
+  // ---------- mapa (Leaflet): poligonos solo con contorno, sin relleno
+  const polys = (d) => (d.geometry.type === 'Polygon' ? [d.geometry.coordinates] : d.geometry.coordinates);
+  const areaR = (r) => Math.abs(r.slice(0, -1).reduce((a, p, i) => a + p[0] * r[i + 1][1] - r[i + 1][0] * p[1], 0) / 2);
+  const centroide = (r) => { let a = 0, x = 0, y = 0; for (let i = 0; i < r.length - 1; i++) { const f = r[i][0] * r[i + 1][1] - r[i + 1][0] * r[i][1]; a += f; x += (r[i][0] + r[i + 1][0]) * f; y += (r[i][1] + r[i + 1][1]) * f; } return [x / (3 * a), y / (3 * a)]; };
+  const map = L.map('mapa', { zoomSnap: 0.25 });
+  const calles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+  const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Imágenes &copy; Esri, Maxar, Earthstar Geographics y la comunidad de usuarios de GIS' });
+  L.control.layers({ 'Calles (OSM)': calles, 'Satélite': satelite }, null, { position: 'topright', collapsed: false }).addTo(map);
+  map.createPane('etiquetas').style.zIndex = 450;
+  map.getPane('etiquetas').style.pointerEvents = 'none';
+  const tipNode = (...kids) => el('div', {}, ...kids);
+  const tipOpts = { sticky: true, direction: 'top', className: 'cdtip', opacity: 1 };
+
+  const nDiv = {}, estadoDiv = {}, bounds = L.latLngBounds();
+  const estiloDiv = (d, est, hover) => ({ color: d.color, weight: est === 'sel' ? 4 : hover ? 3.5 : 2.5, opacity: est === 'dim' ? .3 : 1, fill: true, fillColor: d.color, fillOpacity: 0 });
+  const pintar = (d, hover) => nDiv[d.nombre].setStyle(estiloDiv(d, estadoDiv[d.nombre], hover));
+  for (const d of divisiones) {
+    const capa = L.geoJSON({ type: 'Feature', geometry: d.geometry }, { style: () => estiloDiv(d), bubblingMouseEvents: false }).addTo(map);
+    const pc = porCanton.find((c) => c.nombre === d.nombre);
+    capa.bindTooltip(tipNode(el('b', { text: d.nombre }), el('div', { cls: 'm', text: `${d.tipo} · ${d.area_km2.toFixed(2)} km²` }), el('div', { text: pc.centros ? `${pc.centros} centros · ${pc.jrv} JRV · ${fmt.format(pc.electores)} electores` : 'Sin centro de votación' })), tipOpts);
+    capa.on({ mouseover: () => pintar(d, true), mouseout: () => pintar(d), click: () => setFiltro({ tipo: 'canton', valor: d.nombre }) });
+    nDiv[d.nombre] = capa; estadoDiv[d.nombre] = '';
+    bounds.extend(capa.getBounds());
+    const big = polys(d).map((p) => p[0]).sort((a, b) => areaR(b) - areaR(a))[0];
+    const [cx, cy] = centroide(big);
+    const words = d.nombre.replace(/^(Cantón|Barrio) /, '').split(' ');
+    const lineas = words.length > 2 ? [words.slice(0, 2).join(' '), words.slice(2).join(' ')] : [words.join(' ')];
+    L.marker([cy, cx], { pane: 'etiquetas', interactive: false, keyboard: false, icon: L.divIcon({ className: 'lblw', html: el('span', { cls: 'lbl' }, ...lineas.map((w) => el('div', { text: w }))), iconSize: [0, 0] }) }).addTo(map);
+  }
+  map.fitBounds(bounds, { padding: [12, 12] });
+
+  const maxJrv = Math.max(...centros.map((c) => c.total_jrv));
+  const R = (n) => 5.5 + 13 * Math.sqrt(n / maxJrv); // area del punto proporcional a las JRV
+  const nCv = {};
+  for (const c of centros) {
+    const r = R(c.total_jrv);
+    const m = L.marker([c.latitud, c.longitud], { icon: L.divIcon({ className: 'cv', html: String(c.total_jrv), iconSize: [2 * r, 2 * r], iconAnchor: [r, r] }), zIndexOffset: Math.round((maxJrv - c.total_jrv) * 10), riseOnHover: true }).addTo(map);
+    m.bindTooltip(tipNode(el('b', { text: c.centro }), el('div', { cls: 'm', text: c.canton_barrio }), el('div', { text: `${c.total_jrv} JRV (${c.jrv_inicial}–${c.jrv_final}) · ${fmt.format(c.electores)} electores` })), { direction: 'top', offset: [0, -r], className: 'cdtip', opacity: 1 });
+    m.on('click', () => setFiltro({ tipo: 'centro', valor: c.centro_id }));
+    nCv[c.centro_id] = m;
+  }
+  map.on('click', () => setFiltro(null));
+
+  // acomodo de nombres: cada etiqueta va a la primera posicion que no choca con puntos ni con otras etiquetas
+  const acomodar = () => {
+    const cont = map.getContainer().getBoundingClientRect();
+    const caja = (e) => { const b = e.getBoundingClientRect(); return { x: b.left - 2, y: b.top - 2, w: b.width + 4, h: b.height + 4 }; };
+    const ocupado = Object.values(nCv).map((m) => caja(m.getElement()));
+    const choca = (a) => ocupado.some((b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h) || a.x < cont.left || a.y < cont.top || a.x + a.w > cont.right || a.y + a.h > cont.bottom;
+    const movs = [[0, 0], [0, -14], [0, 14], [0, -26], [0, 26], [-28, 0], [28, 0], [-24, -18], [24, -18], [-24, 18], [24, 18], [0, -40], [0, 40]];
+    for (const t of document.querySelectorAll('#mapa .lbl')) {
+      t.style.setProperty('--dx', '0px'); t.style.setProperty('--dy', '0px');
+      const b0 = caja(t);
+      const m = movs.find(([dx, dy]) => !choca({ ...b0, x: b0.x + dx, y: b0.y + dy })) || [0, 0];
+      t.style.setProperty('--dx', m[0] + 'px'); t.style.setProperty('--dy', m[1] + 'px');
+      ocupado.push({ ...b0, x: b0.x + m[0], y: b0.y + m[1] });
+    }
+  };
+  map.on('zoomend resize', () => requestAnimationFrame(acomodar));
+  requestAnimationFrame(acomodar);
+  // leyenda de tamaños
+  const ley = $('leyenda');
+  const muestras = [...new Set([2, 6, 12, maxJrv])].filter((n) => n <= maxJrv);
+  const rMax = R(maxJrv), ls = S('svg', { width: muestras.length * (2 * rMax + 14), height: 2 * rMax + 18, 'aria-hidden': 'true' });
+  muestras.forEach((n, i) => { const cx = i * (2 * rMax + 14) + rMax + 2; ls.append(S('circle', { cx, cy: 2 * rMax - R(n) + 1, r: R(n), fill: 'var(--point)', 'fill-opacity': .82, stroke: 'var(--point-line)', 'stroke-width': 1.5 }), S('text', { x: cx, y: 2 * rMax + 15, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 11, text: `${n} JRV` })); });
+  ley.append(el('div', {}, el('div', { text: 'Tamaño del punto' }), ls));
+
+  // ---------- detalle lateral
+  const detalle = () => {
+    const d = $('detalle'); d.replaceChildren();
+    if (filtro?.tipo === 'centro') {
+      const c = centros.find((x) => x.centro_id === filtro.valor);
+      const arch = alcCentro[`${c.jrv_inicial}-${c.jrv_final}`];
+      d.append(el('span', { cls: 'chip', text: 'Centro de votación' }), el('h3', { text: c.centro }), el('div', { cls: 'note', text: c.direccion }),
+        el('dl', {}, el('dt', { text: 'Cantón o barrio' }), el('dd', {}, el('span', { cls: 'swatch', style: `background:${colorDe[c.canton_barrio]}` }), c.canton_barrio),
+          el('dt', { text: 'JRV' }), el('dd', { text: `${c.total_jrv} (${c.jrv_inicial}–${c.jrv_final})` }),
+          el('dt', { text: 'Electores' }), el('dd', { text: fmt.format(c.electores) }),
+          el('dt', { text: 'Código' }), el('dd', { text: c.codigo_cv }),
+          el('dt', { text: 'Alcalde (archivado)' }), el('dd', {}, arch ? `${fmt.format(sumPart(arch))} válidos · NI ${fmt.format(arch['NUEVAS IDEAS'] ?? 0)}` : el('span', { cls: 'chip', text: 'Sin dato público' }))));
+    } else if (filtro?.tipo === 'canton') {
+      const pc = porCanton.find((x) => x.nombre === filtro.valor);
+      d.append(el('span', { cls: 'chip', text: pc.tipo }), el('h3', {}, el('span', { cls: 'swatch', style: `background:${pc.color}` }), pc.nombre),
+        el('dl', {}, el('dt', { text: 'Superficie' }), el('dd', { text: `${pc.area_km2.toFixed(2)} km²` }),
+          el('dt', { text: 'Centros' }), el('dd', { text: pc.centros }), el('dt', { text: 'JRV' }), el('dd', { text: pc.jrv }),
+          el('dt', { text: 'Electores' }), el('dd', { text: `${fmt.format(pc.electores)} (${pct(pc.electores / totElect)})` })),
+        el('div', { cls: 'note', style: 'margin-top:8px', text: pc.centros ? centros.filter((c) => c.canton_barrio === pc.nombre).map((c) => c.centro).join(' · ') : 'Sus vecinos votan en centros de otros cantones o barrios.' }));
+    } else {
+      d.append(el('h3', { text: 'Selecciona un cantón o un centro' }), el('p', { cls: 'note', text: 'El mapa, las tablas y este panel se filtran juntos.' }),
+        el('dl', {}, el('dt', { text: 'Superficie' }), el('dd', { text: `${totArea.toFixed(2)} km²` }), el('dt', { text: 'Cantones' }), el('dd', { text: divisiones.filter((x) => x.tipo === 'Cantón').length }),
+          el('dt', { text: 'Barrios' }), el('dd', { text: divisiones.filter((x) => x.tipo === 'Barrio').length }), el('dt', { text: 'Electores por km²' }), el('dd', { text: fmt.format(Math.round(totElect / totArea)) })));
+    }
+  };
+
+  // ---------- barras de electores por cantón
+  const barCanton = () => {
+    const b = $('barCanton'); b.replaceChildren();
+    const m = Math.max(...porCanton.map((c) => c.electores));
+    for (const c of [...porCanton].sort((a, b2) => b2.electores - a.electores)) {
+      const row = el('div', { cls: 'bar', style: 'cursor:pointer' }, el('span', { cls: 'nm', title: c.nombre, text: c.nombre.replace(/^(Cantón|Barrio) /, '') }),
+        el('span', { cls: 'tr' }, el('span', { cls: 'fl', style: `width:${(c.electores / m * 100).toFixed(1)}%;background:${c.color};opacity:${!filtro || (filtro.tipo === 'canton' && filtro.valor === c.nombre) ? 1 : .35}` })),
+        el('span', { cls: 'v' }, fmt.format(c.electores), el('small', { text: ` ${pct(c.electores / totElect)}` })));
+      row.addEventListener('click', () => setFiltro({ tipo: 'canton', valor: c.nombre }));
+      b.append(row);
+    }
+  };
+
+  // ---------- resultados
+  const ELECS = [['Presidente', 'Presidente'], ['Alcalde (Concejo municipal)', 'Alcalde'], ['Diputados Asamblea', 'Diputados']];
+  let elecSel = 'Presidente';
+  const barras = (cont, sub, rows, k, dec) => {
+    cont.replaceChildren(); sub.replaceChildren();
+    const ps = rows.filter((r) => r.tipo === 'partido' && r[k] != null).sort((a, b) => b[k] - a[k]);
+    if (!ps.length) { cont.append(el('p', { cls: 'note', text: 'Sin dato público a nivel de distrito para esta elección: el portal del TSE no quedó archivado para diputados en Ciudad Delgado.' })); return; }
+    const v = ps.reduce((a, r) => a + r[k], 0), m = ps[0][k];
+    const f = (x) => dec ? x.toLocaleString('es-SV', { maximumFractionDigits: 2 }) : fmt.format(x);
+    for (const r of ps) cont.append(el('div', { cls: 'bar' }, el('span', { cls: 'nm', title: r.concepto, text: r.concepto }),
+      el('span', { cls: 'tr' }, el('span', { cls: 'fl', style: `width:${(r[k] / m * 100).toFixed(1)}%;background:${r.color || 'var(--muted)'}` })),
+      el('span', { cls: 'v' }, f(r[k]), el('small', { text: ` ${pct(r[k] / v)}` }))));
+    const o = rows.filter((r) => r.tipo !== 'partido');
+    sub.append(el('span', { text: `Válidos ${f(v)}` }), ...o.map((r) => el('span', { text: `${r.concepto[0] + r.concepto.slice(1).toLowerCase()} ${r[k] == null ? '—' : f(r[k])}` })));
+  };
+  const resultados = () => {
+    const rows = elec(elecSel);
+    barras($('barsCD'), $('subCD'), rows, 'votos_ciudad_delgado', false);
+    barras($('barsMun'), $('subMun'), rows, 'votos_san_salvador_centro', elecSel === 'Diputados Asamblea');
+    const vcd = validos(rows, 'votos_ciudad_delgado'), vm = validos(rows, 'votos_san_salvador_centro');
+    $('notaRes').textContent = vcd ? `Ciudad Delgado aporta el ${pct(vcd / vm)} de los votos válidos del municipio en esta elección. Actas procesadas: 140 de 140.` : 'Solo hay totales del municipio completo para esta elección.';
+    $('tabsRes').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.e === elecSel));
+  };
+  for (const [e, n] of ELECS) { const b = el('button', { cls: 'btn', type: 'button', 'data-e': e, text: n }); b.addEventListener('click', () => { elecSel = e; resultados(); }); $('tabsRes').append(b); }
+
+  // ---------- tablas ordenables
+  const tabla = (t, cols, rows, keyFn, onRow, isSel) => {
+    let sortK = t.dataset.sortK || null, dir = Number(t.dataset.dir || -1);
+    const draw = () => {
+      const rs = [...rows()];
+      if (sortK) { const c = cols.find((x) => x.k === sortK); rs.sort((a, b) => { const va = c.sort ? c.sort(a) : a[sortK], vb = c.sort ? c.sort(b) : b[sortK]; return (va > vb ? 1 : va < vb ? -1 : 0) * dir; }); }
+      const thead = el('thead', {}, el('tr', {}, ...cols.map((c) => { const th = el('th', { cls: c.n ? 'n' : '', 'aria-sort': c.k === sortK ? (dir > 0 ? 'ascending' : 'descending') : 'none' }); const b = el('button', { type: 'button', text: c.h }); b.addEventListener('click', () => { if (sortK === c.k) dir = -dir; else { sortK = c.k; dir = c.n ? -1 : 1; } t.dataset.sortK = sortK; t.dataset.dir = dir; draw(); }); th.append(b); return th; })));
+      const tbody = el('tbody');
+      for (const r of rs) { const tr = el('tr', { cls: isSel(r) ? 'sel' : '', 'data-key': keyFn(r) }, ...cols.map((c) => { const td = el('td', { cls: c.n ? 'n' : '' }); const v = c.f ? c.f(r) : r[c.k]; td.append(v instanceof Node ? v : document.createTextNode(v ?? '—')); return td; })); tr.addEventListener('click', () => onRow(r)); tbody.append(tr); }
+      t.replaceChildren(thead, tbody);
+    };
+    draw(); return draw;
+  };
+  const maxE = Math.max(...porCanton.map((c) => c.electores));
+  const drawCanton = tabla($('tCanton'), [
+    { k: 'nombre', h: 'Cantón o barrio', f: (r) => el('span', {}, el('span', { cls: 'swatch', style: `background:${r.color}` }), r.nombre) },
+    { k: 'tipo', h: 'Tipo' },
+    { k: 'area_km2', h: 'Área (km²)', n: 1, f: (r) => r.area_km2.toFixed(2) },
+    { k: 'centros', h: 'Centros', n: 1 },
+    { k: 'jrv', h: 'JRV', n: 1 },
+    { k: 'electores', h: 'Electores', n: 1, f: (r) => el('span', {}, el('span', { cls: 'inbar', style: `width:${(r.electores / maxE * 70).toFixed(0)}px` }), fmt.format(r.electores)) },
+    { k: 'pct', h: '% del padrón', n: 1, sort: (r) => r.electores, f: (r) => pct(r.electores / totElect) },
+    { k: 'dens', h: 'Electores/km²', n: 1, sort: (r) => r.electores / r.area_km2, f: (r) => fmt.format(Math.round(r.electores / r.area_km2)) },
+  ], () => porCanton, (r) => r.nombre, (r) => setFiltro({ tipo: 'canton', valor: r.nombre }), (r) => filtro?.tipo === 'canton' && filtro.valor === r.nombre);
+
+  let q = '';
+  const centrosVis = () => centros.filter((c) => (!filtro || (filtro.tipo === 'canton' ? c.canton_barrio === filtro.valor : c.centro_id === filtro.valor)) && (!q || `${c.centro} ${c.canton_barrio} ${c.direccion} ${c.jrv_inicial}-${c.jrv_final}`.toLowerCase().includes(q)));
+  const alcOf = (c) => alcCentro[`${c.jrv_inicial}-${c.jrv_final}`];
+  const drawCentros = tabla($('tCentros'), [
+    { k: 'centro_id', h: 'N.º', n: 1 },
+    { k: 'centro', h: 'Centro de votación' },
+    { k: 'canton_barrio', h: 'Cantón o barrio', f: (r) => el('span', {}, el('span', { cls: 'swatch', style: `background:${colorDe[r.canton_barrio]}` }), r.canton_barrio) },
+    { k: 'jrv_inicial', h: 'JRV', n: 1, f: (r) => `${r.jrv_inicial}–${r.jrv_final}` },
+    { k: 'total_jrv', h: 'Total JRV', n: 1 },
+    { k: 'electores', h: 'Electores', n: 1, f: (r) => fmt.format(r.electores) },
+    { k: 'alc', h: 'Alcalde: válidos', n: 1, sort: (r) => (alcOf(r) ? sumPart(alcOf(r)) : -1), f: (r) => (alcOf(r) ? fmt.format(sumPart(alcOf(r))) : el('span', { cls: 'chip', text: 'sin dato' })) },
+    { k: 'ni', h: 'Alcalde: NI', n: 1, sort: (r) => (alcOf(r) ? alcOf(r)['NUEVAS IDEAS'] / sumPart(alcOf(r)) : -1), f: (r) => (alcOf(r) ? pct(alcOf(r)['NUEVAS IDEAS'] / sumPart(alcOf(r))) : '') },
+  ], centrosVis, (r) => r.centro_id, (r) => setFiltro({ tipo: 'centro', valor: r.centro_id }), (r) => filtro?.tipo === 'centro' && filtro.valor === r.centro_id);
+  $('buscar').addEventListener('input', (e) => { q = e.target.value.trim().toLowerCase(); drawCentros(); });
+
+  // ---------- cobertura JRV
+  const CAMPOS = [['dato_presidente', 'Presidente'], ['dato_alcalde', 'Alcalde'], ['dato_diputados', 'Diputados']];
+  let campo = 'dato_alcalde';
+  const estado = (v) => (v === 'JRV' ? 's-jrv' : v === 'solo total del centro' ? 's-centro' : 's-none');
+  $('leyJrv').append(...[['s-jrv', 'Votos de la JRV'], ['s-centro', 'Solo total del centro'], ['s-none', 'Sin dato público']].map(([c, t]) => el('span', {}, el('span', { cls: `cell ${c}`, style: 'display:inline-block;vertical-align:-3px;margin-right:6px' }), t, el('span', { cls: 'cnt', 'data-c': c }))));
+  const waffle = () => {
+    const w = $('waffle'); w.replaceChildren();
+    const cnt = { 's-jrv': 0, 's-centro': 0, 's-none': 0 };
+    for (const c of centros.filter((c) => !filtro || (filtro.tipo === 'canton' ? c.canton_barrio === filtro.valor : c.centro_id === filtro.valor))) {
+      const cells = el('div', { cls: 'cells' });
+      for (const j of jrv.filter((x) => x.centro_id === c.centro_id)) { const st = estado(j[campo]); cnt[st]++; cells.append(el('span', { cls: `cell ${st}`, title: `JRV ${j.jrv} · ${j[campo]}` })); }
+      w.append(el('div', { cls: 'wrow' }, el('span', { cls: 'nm', title: c.centro, text: `${c.centro} (${c.canton_barrio.replace(/^(Cantón|Barrio) /, '')})` }), cells));
+    }
+    document.querySelectorAll('#leyJrv .cnt').forEach((s) => { s.textContent = ` · ${cnt[s.dataset.c]}`; });
+    $('tabsJrv').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.c === campo));
+  };
+  for (const [c, n] of CAMPOS) { const b = el('button', { cls: 'btn', type: 'button', 'data-c': c, text: n }); b.addEventListener('click', () => { campo = c; waffle(); }); $('tabsJrv').append(b); }
+
+  // ---------- filtro compartido
+  function setFiltro(f) {
+    filtro = f && filtro && f.tipo === filtro.tipo && f.valor === filtro.valor ? null : f;
+    const cantonSel = filtro?.tipo === 'canton' ? filtro.valor : filtro?.tipo === 'centro' ? centros.find((c) => c.centro_id === filtro.valor).canton_barrio : null;
+    for (const d of divisiones) { estadoDiv[d.nombre] = cantonSel && d.nombre !== cantonSel ? 'dim' : filtro?.tipo === 'canton' ? 'sel' : ''; pintar(d); if (estadoDiv[d.nombre] === 'sel') nDiv[d.nombre].bringToFront(); }
+    for (const c of centros) { const e = nCv[c.centro_id].getElement(); e.classList.toggle('sel', filtro?.tipo === 'centro' && filtro.valor === c.centro_id); e.classList.toggle('dim', !!filtro && (filtro.tipo === 'canton' ? c.canton_barrio !== filtro.valor : c.centro_id !== filtro.valor)); }
+    $('filtroMapa').classList.toggle('on', !!filtro);
+    $('filtroTxt').textContent = filtro ? (filtro.tipo === 'canton' ? filtro.valor : centros.find((c) => c.centro_id === filtro.valor).centro) : '';
+    detalle(); barCanton(); drawCanton(); drawCentros(); waffle();
+  }
+  $('limpiar').addEventListener('click', () => setFiltro(null));
+
+  detalle(); barCanton(); resultados(); waffle();
+  $('generado').textContent = `Generado el ${generado} con los scripts de las carpetas ciudad_delgado_2024 y ciudad_delgado_divisiones.`;
+})();
+</script>
+</body>
+</html>
